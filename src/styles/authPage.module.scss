@@ -8,7 +8,8 @@
 .box {
     padding: 4rem 3rem;
     background: var(--background-light);
-    min-width: 450px;
+    max-width: 450px;
+    width: 100%;
     border-radius: 0.8rem;
 
     h2 {
@@ -25,8 +26,9 @@
 
         .inputGroup {
             display: flex;
+            margin: 1.3rem 0;
+
             flex-direction: column;
-            margin-bottom: 1.5rem;
 
             &:focus-within input {
                 border-bottom-color: var(--accent-blue);
@@ -50,10 +52,30 @@
                 border-bottom: 1px solid var(--table-black);
                 transition: border-color 0.2s;
             }
+
+            &.error {
+                margin: 0;
+                input {
+                    border-bottom-color: var(--red);
+                }
+
+                p {
+                    margin-top: 1.5rem;
+                    line-height: 1.8rem;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    color: var(--red);
+
+                    span {
+                        margin-left: 0.5rem;
+                    }
+                }
+            }
         }
 
         button {
-            margin-top: 3rem;
+            margin-top: 1rem;
             border: none;
             font-size: 1.6rem;
             display: block;
@@ -76,7 +98,7 @@
         }
     }
 
-    p {
+    & > p {
         text-align: center;
 
         a {

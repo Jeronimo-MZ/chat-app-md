@@ -71,7 +71,6 @@ export const AuthContextProvider: React.FC = ({ children }) => {
                     password,
                 })
                 .then((response) => {
-                    console.log(response.data);
                     localStorage.setItem("@chat:token", response.data.token);
                     setUser(mapUser(response.data.user));
                 });
@@ -86,7 +85,6 @@ export const AuthContextProvider: React.FC = ({ children }) => {
                 password,
             })
             .then((response) => {
-                console.log(response.data);
                 localStorage.setItem("@chat:token", response.data.token);
                 setUser(mapUser(response.data.user));
             });
