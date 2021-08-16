@@ -1,0 +1,9 @@
+.container {
+    display: grid;
+    grid-template-columns: 7rem 1fr;
+
+    & > main {
+        display: grid;
+        grid-template-columns: 30rem 1fr;
+    }
+}

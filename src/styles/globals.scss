@@ -24,6 +24,7 @@
     --gray: #90a0b7;
     --light-gray: #cecece;
     --icon-gray: #c2cfed;
+    --gray-lighter: #c5c5c5;
     --white: #ffffff;
 
     font-family: "Inter", sans-serif;
@@ -33,7 +34,7 @@
 
 body {
     background-color: var(--background);
-    min-height: 100vh;
+    height: 100vh;
 }
 
 input {
@@ -75,4 +76,19 @@ h6 {
 
 p {
     font-size: 1.6rem;
+}
+
+/* Scroll */
+::-webkit-scrollbar {
+    width: 8px; /* width of the entire scrollbar */
+}
+
+::-webkit-scrollbar-track {
+    background: #333; /* color of the tracking area */
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: #555; /* color of the scroll thumb */
+    border-radius: 20px; /* roundness of the scroll thumb */
+    border: 1px solid #444; /* creates padding around scroll thumb */
 }

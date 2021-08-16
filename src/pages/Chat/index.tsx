@@ -1,13 +1,28 @@
 import React from "react";
-import { useAuth } from "../../hooks/Auth";
+import { Sidebar } from "../../components/Sidebar";
+import styles from "./styles.module.scss";
+import { Conversations } from "../../components/Conversations";
+import { CurrentConversation } from "../../components/CurrentConversation";
+import { useState } from "react";
+
+export interface IChat {
+    name: string;
+}
 
 const Chat: React.FC = () => {
-    const { user, signOut } = useAuth();
+    const [chat, setChat] = useState<IChat>({
+        name: "James Gosling",
+    });
+    const handleOpenChat = (chat: IChat) => {
+        setChat(chat);
+    };
     return (
-        <div>
-            <h1>Chat</h1>
-            <h3>{JSON.stringify(user)}</h3>
-            <button onClick={signOut}>Logout</button>
+        <div className={styles.container}>
+            <Sidebar />
+            <main>
+                <Conversations handleOpenChat={handleOpenChat} />
+                <CurrentConversation chat={chat} />
+            </main>
         </div>
     );
 };
