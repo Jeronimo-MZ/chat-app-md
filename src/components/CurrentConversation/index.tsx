@@ -4,70 +4,80 @@ import { FiHash, FiSend } from "react-icons/fi";
 import styles from "./styles.module.scss";
 import placeholderImg from "../../assets/logo.png";
 import { useForm } from "react-hook-form";
-import { useState } from "react";
 import { useAuth } from "../../hooks/Auth";
-import { IChat } from "../../pages/Chat";
+import { api } from "../../services/api";
+import { useState } from "react";
+import { useEffect } from "react";
+import { io } from "socket.io-client";
 
 interface FormData {
     message: string;
 }
 
-interface Message {
+interface IMessage {
+    author: {
+        _id: string;
+        username: string;
+        email: string;
+    };
+    _id: string;
     content: string;
-    id: string;
-    author_name: string;
-    author_img: string;
-    sentByUser: boolean;
     createdAt: Date;
+    updatedAt: Date;
 }
 
-export const CurrentConversation: React.FC<{ chat: IChat }> = ({ chat }) => {
-    const { user } = useAuth();
-    const chatName = chat.name;
-    const [messages, setMessages] = useState<Message[]>([
-        {
-            author_img: "",
-            author_name: "James Gosling",
-            content: "Hey!",
-            id: "FakeId",
-            sentByUser: false,
-            createdAt: new Date(),
-        },
-        {
-            author_img: "",
-            author_name: "James Gosling",
-            content: "Do you like Java?",
-            id: "FakeId2",
-            sentByUser: false,
-            createdAt: new Date(),
-        },
-    ]);
+export const CurrentConversation: React.FC = () => {
+    const { user, token } = useAuth();
+    const [messages, setMessages] = useState<IMessage[]>([]);
+
+    const chatName = user.username;
     const { register, handleSubmit, reset } = useForm<FormData>();
 
     const handleSendMessage = handleSubmit((data) => {
-        const { message } = data;
-
+        let { message } = data;
+        message = message.trim();
         if (message && message.length >= 1) {
-            const newMessage: Message = {
-                author_img: placeholderImg,
-                author_name: user.name,
-                content: message.trim(),
-                id: `${Math.random()} ${user._id}`,
-                sentByUser: true,
-                createdAt: new Date(),
-            };
-
-            setMessages([...messages, newMessage]);
             reset();
-            const messagesContainer = document.querySelector("#messages");
-            messagesContainer?.scroll({
-                behavior: "smooth",
-                top: messagesContainer.scrollHeight,
-            });
+            api.post(
+                "/chat/messages",
+                {
+                    content: message,
+                },
+                { headers: { authorization: `${token}` } }
+            );
         }
     });
 
+    const scrollToBottom = () => {
+        const messagesContainer = document.querySelector("#messages");
+        messagesContainer?.scroll({
+            behavior: "smooth",
+            top: messagesContainer.scrollHeight,
+        });
+    };
+
+    useEffect(() => {
+        api.get("/chat/messages", {
+            headers: { authorization: `${token}` },
+        }).then((response) => {
+            setMessages(response.data.messages || []);
+            scrollToBottom();
+        });
+
+        const socket = io("http://localhost:3333");
+        socket.emit("joinChat", token);
+
+        socket.on("new_message", ({ message }) => {
+            setMessages((messages) => [...messages, message]);
+            scrollToBottom();
+        });
+        return () => {
+            socket.disconnect();
+        };
+    }, [token]);
+
     const formatDate = (date: Date) => {
+        date = new Date(date);
         return `${date.toLocaleTimeString()} - ${date.toLocaleDateString()}`;
     };
 
@@ -83,23 +93,19 @@ export const CurrentConversation: React.FC<{ chat: IChat }> = ({ chat }) => {
                 <ul>
                     {messages.map((message, index) => (
                         <li
-                            key={message.id}
+                            key={message._id}
                             className={`${styles.message} ${
-                                message.sentByUser
+                                message.author._id === user._id
                                     ? styles.sent
                                     : styles.received
                             }`}
                         >
                             <figure>
-                                <img
-                                    src={message.author_img}
-                                    srcSet={placeholderImg}
-                                    alt={message.author_name}
-                                />
+                                <img srcSet={placeholderImg} alt={chatName} />
                             </figure>
                             <div>
                                 <p>
-                                    <strong>{message.author_name}</strong>
+                                    <strong>{message.author.username}</strong>
                                     <span>{formatDate(message.createdAt)}</span>
                                 </p>
                                 <p>{message.content}</p>

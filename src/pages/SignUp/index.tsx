@@ -10,18 +10,18 @@ import { useAuth } from "../../hooks/Auth";
 import styles from "./../../styles/authPage.module.scss";
 
 type FormData = {
-    name: string;
+    email: string;
     username: string;
     password: string;
 };
 
 const schema = Yup.object().shape({
-    name: Yup.string().required().min(3),
+    email: Yup.string().email().required(),
     username: Yup.string()
         .required()
         .min(3)
         .max(25)
-        .matches(/^[_]*[0-9]*[a-zA-Z]+[a-zA-Z0-9_]*$/, "invalid username"),
+        .matches(/^[_]*[0-9]*[a-zA-Z.]+[a-zA-Z0-9_]*$/, "invalid username"),
     password: Yup.string().required().min(8).max(30),
 });
 
@@ -36,13 +36,17 @@ const SignUp: React.FC = () => {
     const { signUp } = useAuth();
 
     const onSubmit = handleSubmit(async (data: FormData) => {
-        const { name, password, username } = data;
+        const { email, password, username } = data;
         try {
-            await signUp({ name, password, username });
+            await signUp({ email, password, username });
             toast.success("Account created successfully!", { autoClose: 2000 });
         } catch (error) {
-            if (error.response.status === 403) {
-                toast.error("Username already used");
+            try {
+                if (error.response.status === 403) {
+                    toast.error("Username or email already used");
+                }
+            } catch {
+                toast.error("Unexpected Error, please try again!");
             }
         }
     });
@@ -54,20 +58,20 @@ const SignUp: React.FC = () => {
                 <form onSubmit={onSubmit}>
                     <div
                         className={`${styles.inputGroup} ${
-                            errors.name && styles.error
+                            errors.email && styles.error
                         }`}
                     >
-                        <label htmlFor="name">Name</label>
+                        <label htmlFor="email">Email</label>
                         <input
-                            id="name"
-                            type="text"
-                            placeholder="name"
-                            {...register("name")}
+                            id="email"
+                            type="email"
+                            placeholder="E-mail"
+                            {...register("email")}
                         />
-                        {errors.name && (
+                        {errors.email && (
                             <p>
                                 <FiAlertCircle />
-                                <span>{errors.name.message}</span>
+                                <span>{errors.email.message}</span>
                             </p>
                         )}
                     </div>

@@ -13,18 +13,13 @@ interface SignInData {
 }
 
 interface SignUpData extends SignInData {
-    name: string;
+    email: string;
 }
 
 export interface User {
     _id: string;
     username: string;
-    name: string;
-    profilePicture?: string;
-    contacts: string[];
-    bio?: string;
-    online: boolean;
-    active: boolean;
+    email: string;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -34,27 +29,26 @@ interface AuthContextData {
     signIn(data: SignInData): Promise<void>;
     signOut(): Promise<void>;
     user: User;
+    token: string;
     isAuthenticated: boolean;
     hasLoaded: boolean;
+    users: User[];
 }
 
 const mapUser = (user: User): User => ({
     _id: user._id,
     username: user.username,
-    active: user.active,
-    contacts: user.contacts,
-    bio: user.bio,
-    online: user.online,
+    email: user.email,
     createdAt: user.createdAt,
     updatedAt: user.updatedAt,
-    profilePicture: user.profilePicture,
-    name: user.name,
 });
 
 const AuthContext = createContext({} as AuthContextData);
 
 export const AuthContextProvider: React.FC = ({ children }) => {
     const [user, setUser] = useState<User>(null as unknown as User);
+    const [users, setUsers] = useState<User[]>([]);
+    const [token, setToken] = useState("");
     const [isAuthenticated, setIsAuthenticated] = useState(!!user);
     const [hasLoaded, setHasLoaded] = useState(false);
 
@@ -63,15 +57,17 @@ export const AuthContextProvider: React.FC = ({ children }) => {
     }, [user]);
 
     const signUp = useCallback(
-        async ({ username, name, password }: SignUpData) => {
+        async ({ username, email, password }: SignUpData) => {
             await api
-                .post<{ user: User; token: string }>("/users", {
+                .post<{ user: User; token: string }>("/signup", {
                     username,
-                    name,
+                    email,
                     password,
                 })
                 .then((response) => {
-                    localStorage.setItem("@chat:token", response.data.token);
+                    localStorage.setItem("@md_chat:token", response.data.token);
+                    setToken(response.data.token);
+
                     setUser(mapUser(response.data.user));
                 });
         },
@@ -80,12 +76,13 @@ export const AuthContextProvider: React.FC = ({ children }) => {
 
     const signIn = useCallback(async ({ username, password }: SignInData) => {
         await api
-            .post<{ user: User; token: string }>("/sessions", {
+            .post<{ user: User; token: string }>("/login", {
                 username,
                 password,
             })
             .then((response) => {
-                localStorage.setItem("@chat:token", response.data.token);
+                setToken(response.data.token);
+                localStorage.setItem("@md_chat:token", response.data.token);
                 setUser(mapUser(response.data.user));
             });
     }, []);
@@ -93,25 +90,38 @@ export const AuthContextProvider: React.FC = ({ children }) => {
     const signOut = useCallback(async () => {
         setUser(null as unknown as User);
         setIsAuthenticated(false);
-        localStorage.removeItem("@chat:token");
+        localStorage.removeItem("@md_chat:token");
+        setToken("");
     }, []);
 
     async function loadUser(token: string) {
         await api
             .get<{ user: User }>("/users/me", {
-                headers: { authorization: `BEARER ${token}` },
+                headers: { authorization: `${token}` },
             })
             .then((response) => {
+                setToken(token);
                 setUser(mapUser(response.data.user));
             })
             .catch((error) => {
                 console.error(error);
             });
+        await api
+            .get<{ users: User[] }>("/users", {
+                headers: { authorization: `${token}` },
+            })
+            .then((response) => {
+                setUsers(response.data.users.map(mapUser));
+            })
+            .catch((error) => {
+                console.error(error);
+            });
+
         setHasLoaded(true);
     }
 
     useEffect(() => {
-        const token = localStorage.getItem("@chat:token");
+        const token = localStorage.getItem("@md_chat:token");
         if (token) {
             loadUser(token);
         } else {
@@ -128,6 +138,8 @@ export const AuthContextProvider: React.FC = ({ children }) => {
                 isAuthenticated,
                 hasLoaded,
                 signOut,
+                users,
+                token,
             }}
         >
             {children}

@@ -19,7 +19,7 @@ const schema = Yup.object().shape({
         .required()
         .min(3)
         .max(25)
-        .matches(/^[_]*[0-9]*[a-zA-Z]+[a-zA-Z0-9_]*$/, "invalid username"),
+        .matches(/^[_]*[0-9]*[a-zA-Z.]+[a-zA-Z0-9_]*$/, "invalid username"),
     password: Yup.string().required().min(8).max(30),
 });
 
@@ -39,8 +39,12 @@ const Login: React.FC = () => {
             await signIn({ password, username });
             toast.success("Logged in successfully!", { autoClose: 2000 });
         } catch (error) {
-            if (error.response.status === 403) {
-                toast.error("Invalid credentials");
+            try {
+                if (error.response.status === 403) {
+                    toast.error("Invalid credentials");
+                }
+            } catch {
+                toast.error("Unexpected Error, please try again!");
             }
         }
     });
